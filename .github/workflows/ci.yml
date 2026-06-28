@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: lint + tests on ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+          # Stub sentence-transformers in CI: skip downloading the real model
+          python -m pip install pytest-cov
+
+      - name: ruff
+        run: ruff check src tests
+
+      - name: black
+        run: black --check src tests
+
+      - name: isort
+        run: isort --check src tests
+
+      - name: mypy
+        run: mypy src/pyduck_ona_profile
+
+      - name: pytest
+        run: |
+          pytest --cov=pyduck_ona_profile --cov-report=term --cov-fail-under=85 tests/
