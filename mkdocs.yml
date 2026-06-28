@@ -8,7 +8,17 @@ theme:
   name: material
 
 plugins:
-  - mkdocstrings
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
 
 nav:
   - Home: index.md
@@ -21,3 +31,4 @@ nav:
       - query.matcher: api/query.matcher.md
       - query.patterns: api/query.patterns.md
       - query.ask: api/query.ask.md
+  - Changelog: changelog.md

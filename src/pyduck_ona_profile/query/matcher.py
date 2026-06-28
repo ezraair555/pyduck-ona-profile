@@ -13,9 +13,9 @@ The whole match step takes ~5-20ms on CPU with all-MiniLM-L6-v2.
 from __future__ import annotations
 
 import re
-from typing import Any
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 

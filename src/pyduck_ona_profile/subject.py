@@ -143,11 +143,31 @@ class Subject:
         }
 
     def _relation_to_df(self, binding: ConceptBinding) -> pd.DataFrame | None:
-        """Best-effort fetch of the underlying relation as a DataFrame."""
+        """Best-effort fetch of the underlying relation as a DataFrame.
+
+        Tries three strategies in order:
+        1. Attribute on the DuckONA instance (``ona.hris``)
+        2. Private attribute (``ona._hris``)
+        3. DuckDB connection query (``ona.con.sql(...)``)
+        """
         # NB: pandas DataFrames raise on truthiness, so we can't use `or`.
-        rel = getattr(self._ona, binding.table, None)
+        rel: Any = getattr(self._ona, binding.table, None)
         if rel is None:
             rel = getattr(self._ona, "_" + binding.table, None)
+        if rel is None:
+            # Fall back to DuckONA's connection. The DuckONA instance
+            # exposes `.con` with the loaded tables.
+            con = getattr(self._ona, "con", None)
+            table_names = getattr(self._ona, "_table_names", None)
+            if (
+                con is not None
+                and table_names is not None
+                and binding.table in table_names
+            ):
+                try:
+                    rel = con.sql(f"SELECT * FROM {binding.table}")
+                except Exception:
+                    return None
         if rel is None:
             return None
         try:

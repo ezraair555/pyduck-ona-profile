@@ -77,12 +77,43 @@ def _resolve_table_placeholders(template: str, registry: SchemaRegistry) -> str:
     return out
 
 
+def _looks_like_relevant_table(name: str, registry: SchemaRegistry) -> bool:
+    """Heuristic: is this table name likely referenced by a pattern?
+
+    Some patterns reference tables that the schema registry doesn't bind
+    (e.g., ``centrality_scores``, ``manager_changes``). We accept any
+    table whose name appears in the registered pattern SQL templates so
+    the user can supply these auxiliary tables via ``data=``.
+    """
+    from pyduck_ona_profile.query.patterns import SEED_PATTERNS
+
+    relevant = set()
+    for p in SEED_PATTERNS:
+        # Pull out {schema_table_X} placeholders
+        i = 0
+        while True:
+            j = p.sql_template.find("{schema_table_", i)
+            if j < 0:
+                break
+            k = p.sql_template.find("}", j)
+            if k < 0:
+                break
+            concept = p.sql_template[j + len("{schema_table_") : k]
+            binding = registry.table_for(concept)
+            if binding is not None:
+                relevant.add(binding.table)
+            i = k + 1
+    # Also accept names that match concept names directly (e.g. "centrality_scores")
+    return name in relevant or name in {b.table for b in registry.bindings}
+
+
 def ask(
     question: str,
     registry: SchemaRegistry,
     *,
     matcher: PatternMatcher | None = None,
     con: Any | None = None,
+    data: dict[str, Any] | None = None,
     threshold: float = 0.45,
 ) -> AskResult:
     """Run a natural-language HR question against the loaded data.
@@ -98,8 +129,13 @@ def ask(
         process-wide matcher initialized lazily.
     con:
         Optional DuckDB connection. If omitted, an in-memory connection is
-        used and the registry's underlying relations are registered on it.
-        Most users don't need to pass this.
+        used. The connection is populated from ``data`` (see below) and the
+        registry's table names.
+    data:
+        Optional dict mapping table names to pandas DataFrames (or anything
+        DuckDB can register via ``con.register(name, obj)``). Required if
+        ``con`` is not provided. Each key must match a table name known to
+        the registry. Extra keys are ignored.
     threshold:
         Minimum similarity for a match. Below this, returns matched_pattern=None
         so the caller can grow the catalog.
@@ -123,26 +159,92 @@ def ask(
     pattern = next(p for p in m.patterns if p.pattern_id == match.pattern_id)
     sql = _resolve_table_placeholders(pattern.sql_template, registry)
 
-    # Substitute slots
+    # Validate slot substitution: only allow integer types within a sane
+    # range, and only substitute placeholders that are known to the
+    # matched pattern. This is the second line of defense against SQL
+    # injection: even if a future pattern author adds a non-numeric slot,
+    # we refuse to substitute a non-int here.
+    max_slot_int = 1200  # upper bound on window-style slots (months/quarters/etc.)
+
     for slot_name, slot_value in match.slots.items():
-        sql = sql.replace("{" + slot_name + "}", str(slot_value))
+        placeholder = "{" + slot_name + "}"
+        if placeholder not in sql:
+            continue
+        if not isinstance(slot_value, int) or not (1 <= slot_value <= max_slot_int):
+            return AskResult(
+                question=question,
+                matched_pattern=match.pattern_id,
+                similarity_score=match.similarity,
+                slots=match.slots,
+                sql=None,
+                result=None,
+                error=(
+                    f"slot {slot_name!r} value {slot_value!r} rejected: "
+                    f"must be int in [1, {max_slot_int}]"
+                ),
+            )
+        sql = sql.replace(placeholder, str(slot_value))
 
     # Provide defaults for slots the user didn't specify
     for slot_name in pattern.slot_phrasings:
-        if "{" + slot_name + "}" in sql and slot_name not in match.slots:
-            sql = sql.replace("{" + slot_name + "}", "12")  # default to 12 months
+        placeholder = "{" + slot_name + "}"
+        if placeholder in sql and slot_name not in match.slots:
+            # Default to 12 (months). Safe: int in valid range.
+            sql = sql.replace(placeholder, "12")
+
+    # Catch any unresolved {schema_table_X} or other placeholders BEFORE
+    # handing SQL to DuckDB. Return a clean error instead of a parse error.
+    import re
+
+    leftover = re.findall(r"\{[a-z_]+\}", sql)
+    if leftover:
+        return AskResult(
+            question=question,
+            matched_pattern=match.pattern_id,
+            similarity_score=match.similarity,
+            slots=match.slots,
+            sql=sql,
+            result=None,
+            error=(
+                f"unresolved placeholders in SQL: {leftover}. "
+                f"Load the corresponding tables or add them to `data=`."
+            ),
+        )
 
     try:
         if con is None:
+            if not data:
+                return AskResult(
+                    question=question,
+                    matched_pattern=match.pattern_id,
+                    similarity_score=match.similarity,
+                    slots=match.slots,
+                    sql=sql,
+                    result=None,
+                    error=(
+                        "no DuckDB connection provided and no `data` dict "
+                        "supplied; pass either `con=` or `data=`"
+                    ),
+                )
             import duckdb
 
             con = duckdb.connect(":memory:")
-            # Register all loaded tables from the registry into the connection
-            for _binding in registry.bindings:
-                # Best-effort: assume the registry carries enough metadata to
-                # re-register the relation. In practice users pass a con that
-                # already has the data loaded (DuckONA workflow).
-                pass
+            # Register every table in `data` whose name matches a known
+            # registry binding. Unknown tables are registered too — users
+            # may legitimately have extra context tables.
+            known_tables = {b.table for b in registry.bindings}
+            for name, frame in data.items():
+                if name in known_tables or _looks_like_relevant_table(name, registry):
+                    try:
+                        con.register(name, frame)
+                    except Exception as e:
+                        # Register failures are non-fatal — the query may
+                        # still work without the optional table.
+                        import logging
+
+                        logging.getLogger("pyduck_ona_profile").debug(
+                            "could not register %s: %s", name, e
+                        )
         result_df = con.execute(sql).fetch_df()
     except Exception as e:
         return AskResult(

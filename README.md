@@ -72,14 +72,24 @@ tl.as_of("2024-06-01")              # snapshot at a point in time
 
 # 4. Natural-language queries (no LLM)
 reg = attach(ona)
-result = ask("employees with the most managers in the last 24 months", reg)
-print(result.result)                # DataFrame
+# Pass `data=` so the in-memory DuckDB connection knows about your tables.
+# You can also pass a pre-built `con=` DuckDB connection instead.
+data = {
+    "hris": hris_df,
+    "compensation": comp_df,
+    "turnover": turnover_df,
+    "manager_changes": manager_changes_df,   # if you've computed this
+    "promotions": promotions_df,             # if you've computed this
+}
+result = ask(
+    "employees with the most managers in the last 24 months",
+    reg, data=data,
+)
+print(result.result)                # DataFrame (or None on error)
 print(result.sql)                   # DuckDB SQL that produced it
 print(result.matched_pattern)       # which pattern fired
 print(result.similarity_score)      # 0.0–1.0 confidence
-
-result = ask("recent promotions in the last 6 months", reg)
-print(result.result)
+print(result.error)                 # if matched but query failed
 ```
 
 ## How the query layer works

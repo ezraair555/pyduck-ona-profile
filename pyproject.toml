@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyduck-ona-profile"
-version = "0.1.0"
+version = "0.1.1"
 description = "Subject-centric, time-aware people analytics on top of pyduck-ona (no LLM required)."
 readme = "README.md"
 license = {text = "MIT"}
@@ -30,6 +30,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Database",
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Typired :: Typed",
@@ -106,5 +107,3 @@ target-version = ["py310", "py311", "py312"]
 [tool.isort]
 profile = "black"
 line_length = 100
-multi_line_single = true
-single_line_exclusions = ["typing"]
