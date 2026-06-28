@@ -48,7 +48,7 @@ from pyduck_ona_profile.schema import (
 from pyduck_ona_profile.subject import Profile, Subject
 from pyduck_ona_profile.timeline import Timeline
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 __all__ = [
     "AskResult",

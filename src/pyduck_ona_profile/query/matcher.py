@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+from numpy import typing as npt
 
 
 @dataclass(frozen=True)
@@ -106,8 +107,8 @@ class PatternMatcher:
         self.patterns = list(patterns)
         self.threshold = threshold
         self._model_name = model_name
-        self._model = None  # lazy-loaded
-        self._centroids: dict[str, np.ndarray] = {}
+        self._model: Any = None  # lazy-loaded
+        self._centroids: dict[str, npt.NDArray[np.float32]] = {}
 
     def _ensure_model(self) -> Any:
         if self._model is None:

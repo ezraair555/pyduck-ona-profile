@@ -12,3 +12,8 @@ dist/
 venv/
 .env
 .DS_Store
+
+# Review environment (Kimi's local venv)
+.venv-review/
+# MkDocs build output
+site/

@@ -219,28 +219,32 @@ def test_unresolved_placeholder_returns_clean_error(
     tiny_registry_with_data, patched_st, empty_hris
 ):
     """If the SQL has an unresolved {schema_table_X}, return AskResult.error."""
+    # Use example words that exist in the dummy vocab so the centroid is
+    # non-zero and the matcher actually returns a Match. This guarantees
+    # we exercise the unresolved-placeholder branch in ask().
     bad_pattern = QueryPattern(
         pattern_id="bad_pattern",
-        examples=("nonexistent concept query",),
+        examples=("reorged victims",),
         slot_phrasings={},
-        sql_template="SELECT * FROM {schema_table_nonexistent_concept}",
+        sql_template="SELECT * FROM {schema_table_unknown_concept}",
     )
     matcher = PatternMatcher([bad_pattern], model_name="dummy-model")
     matcher.build_index()
     matcher.threshold = 0.0
-    matcher._centroids["bad_pattern"] = np.ones(88, dtype=np.float32)
     result = ask(
-        "nonexistent concept query",
+        "reorged victims",
         tiny_registry_with_data,
         matcher=matcher,
         data={"hris": empty_hris},
     )
-    if result.matched_pattern:
-        assert result.error is not None
-        assert (
-            "unresolved" in (result.error or "").lower()
-            or "placeholders" in (result.error or "").lower()
-        )
+    # Assert we actually matched the bad pattern; otherwise the test is
+    # vacuous. The placeholder path is only reachable when a pattern matches.
+    assert result.matched_pattern == "bad_pattern"
+    assert result.error is not None
+    assert (
+        "unresolved" in (result.error or "").lower()
+        or "placeholders" in (result.error or "").lower()
+    )
 
 
 def test_ask_without_con_or_data_returns_helpful_error(tiny_registry_with_data):
