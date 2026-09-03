@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-09-03
+
+### Added
+- **Ecosystem alignment with the flagship.** README "Companion packages"
+  section restructured into a proper ecosystem section reflecting the
+  current package family: `pyduck-ona` (flagship — analysis + the
+  integrated `pyduck_ona.viz` subpackage), `pyduck-janitor` (cleaning),
+  and `broom-sm` (stats). The standalone `pyduck-ona-viz` package is
+  deprecated (frozen at v0.1.1) and replaced by the flagship's built-in
+  `pyduck_ona.viz`.
+- Committed previously untracked files: `CONTRIBUTING.md` and
+  `tests/property_schema_heuristics.py` (18 Hypothesis property tests,
+  now green).
+
+### Changed
+- Dependency floor raised: `pyduck-ona>=0.3.0` (tested against flagship
+  0.3.0 with the integrated viz subpackage: 55 passed, 1 skipped).
+
+### Fixed
+- CHANGELOG gap: the v0.1.2 hotfix (defensive type annotations in
+  `matcher.py` for ndarray and the lazy-loaded SentenceTransformer slot;
+  mypy strict clean on supported numpy/mypy combinations) had no
+  changelog entry — documented here for completeness.
+
+## [0.1.2] - 2026-06-27
+
+### Fixed
+- `matcher.py`: defensive type annotations for ndarray and the
+  lazy-loaded SentenceTransformer slot. mypy strict passes on all
+  supported numpy/mypy combinations (previously only on the dev
+  machine's versions).
+
 ## [0.1.1] - 2026-06-27
 
 ### Fixed

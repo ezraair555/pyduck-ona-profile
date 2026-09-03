@@ -137,10 +137,24 @@ src/pyduck_ona_profile/
     └── ask.py         # ask() entrypoint that ties it all together
 ```
 
-## Companion packages
+## Ecosystem
 
-- [pyduck-ona](https://github.com/ezraair555/pyduck-ona) — DuckDB-native people analytics (the analytical core)
-- [pyduck-ona-viz](https://github.com/ezraair555/pyduck-ona-viz) — publication-quality visualizations
+`pyduck-ona` is the flagship of a small family of composable DuckDB-native
+packages. This package is the subject-centric layer:
+
+- [pyduck-ona](https://github.com/ezraair555/pyduck-ona) — **flagship**.
+  DuckDB-native people analytics: hierarchy, graph, temporal, stats,
+  search, and the built-in `pyduck_ona.viz` visualization subpackage.
+- [pyduck-janitor](https://github.com/ezraair555/pyduck-janitor) —
+  DuckDB-native data cleaning; feeds this package via
+  `DuckONA.from_janitor(...)`.
+- [broom-sm](https://github.com/ezraair555/broom-sm) — R-style tidy
+  statistical summaries behind pyduck-ona's `[broom]` extra.
+
+Layering: `pyduck-janitor` (clean) → `pyduck-ona` (analyze, visualize) →
+`pyduck-ona-profile` (subject-centric views, NL query). The former
+standalone `pyduck-ona-viz` package is deprecated — its code now lives in
+the flagship as `pyduck_ona.viz` (`pip install pyduck-ona[viz]`).
 
 ## License
 
