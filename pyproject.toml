@@ -30,10 +30,9 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "Topic :: Database",
     "Topic :: Scientific/Engineering :: Information Analysis",
-    "Typired :: Typed",
+    "Typing :: Typed",
 ]
 requires-python = ">=3.10"
 dependencies = [
@@ -68,7 +67,7 @@ Issues = "https://github.com/ezraair555/pyduck-ona-profile/issues"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"pyduck_ona_profile" = ["py.typed", "query/patterns/*.yaml"]
+"pyduck_ona_profile" = ["py.typed"]
 
 [tool.ruff]
 line-length = 100

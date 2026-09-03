@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Dependency floor raised: `pyduck-ona>=0.3.0` (tested against flagship
   0.3.0 with the integrated viz subpackage: 55 passed, 1 skipped).
+- PyPI build/twine checks pass for sdist + wheel.
+
+### Fixed
+- Package-data glob referenced a non-existent `query/patterns/*.yaml`
+  (patterns live in `query/patterns.py`); corrected to `py.typed` only.
+- Classifier typo (`Typired :: Typed` → `Typing :: Typed`) and removed
+  the Python 3.13 classifier (not currently tested in CI).
 
 ### Fixed
 - CHANGELOG gap: the v0.1.2 hotfix (defensive type annotations in
