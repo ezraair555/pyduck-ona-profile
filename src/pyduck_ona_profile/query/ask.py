@@ -103,7 +103,12 @@ def _looks_like_relevant_table(name: str, registry: SchemaRegistry) -> bool:
             if binding is not None:
                 relevant.add(binding.table)
             i = k + 1
-    # Also accept names that match concept names directly (e.g. "centrality_scores")
+    # Include literal auxiliary tables used by patterns (e.g. manager_changes
+    # and centrality_scores), not only schema placeholders.
+    import re
+
+    for p in SEED_PATTERNS:
+        relevant.update(re.findall(r"\b(?:FROM|JOIN)\s+([A-Za-z_][A-Za-z0-9_]*)", p.sql_template, re.I))
     return name in relevant or name in {b.table for b in registry.bindings}
 
 
@@ -229,9 +234,7 @@ def ask(
             import duckdb
 
             con = duckdb.connect(":memory:")
-            # Register every table in `data` whose name matches a known
-            # registry binding. Unknown tables are registered too — users
-            # may legitimately have extra context tables.
+            # Register schema-bound and pattern-referenced auxiliary tables.
             known_tables = {b.table for b in registry.bindings}
             for name, frame in data.items():
                 if name in known_tables or _looks_like_relevant_table(name, registry):

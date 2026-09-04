@@ -40,9 +40,10 @@ MANAGER_CHANGE_FREQUENCY = QueryPattern(
         ),
     },
     sql_template="""
-        SELECT m.employee_id, COUNT(DISTINCT m.new_manager_id) AS manager_changes
+        SELECT m.employee_id, COUNT(DISTINCT m.after_value) AS manager_changes
         FROM manager_changes m
-        WHERE m.change_date >= CURRENT_DATE - INTERVAL '{window_months} months'
+        WHERE m.event_type = 'manager_change'
+          AND m.event_date >= CURRENT_DATE - INTERVAL '{window_months} months'
         GROUP BY m.employee_id
         ORDER BY manager_changes DESC
         LIMIT 50

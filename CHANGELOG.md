@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixed
+- The documented manager-change natural-language query now consumes the
+  event detector's actual `event_type`, `event_date`, and `after_value`
+  columns.
+- `ask(data=...)` now registers literal auxiliary tables referenced by query
+  patterns, including `manager_changes` and `centrality_scores`.
+
 ## [0.1.3] - 2026-09-03
 
 ### Added

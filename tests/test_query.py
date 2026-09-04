@@ -317,6 +317,30 @@ def test_ask_executes_compensation_query(tiny_ona, dummy_matcher, monkeypatch):
     assert hasattr(result.result, "columns")
 
 
+def test_ask_registers_and_executes_event_detector_output(
+    tiny_ona, dummy_matcher, monkeypatch
+):
+    """The manager-change pattern consumes the event detector's public schema."""
+    from pyduck_ona_profile.events import detect_manager_changes
+    from pyduck_ona_profile.schema import attach
+
+    reg = attach(tiny_ona)
+    monkeypatch.setattr(
+        "pyduck_ona_profile.query.ask.get_matcher",
+        lambda model_name=None: dummy_matcher,
+    )
+    changes = detect_manager_changes(tiny_ona.hris)
+    result = ask(
+        "most reorged employees in the last 24 months",
+        reg,
+        matcher=dummy_matcher,
+        data={"hris": tiny_ona.hris, "manager_changes": changes},
+    )
+    assert result.error is None, result.error
+    assert result.result is not None
+    assert set(result.result.columns) == {"employee_id", "manager_changes"}
+
+
 def test_ask_to_dict_roundtrip(tiny_ona, dummy_matcher, monkeypatch):
     from pyduck_ona_profile.schema import attach
 

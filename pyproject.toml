@@ -7,7 +7,7 @@ name = "pyduck-ona-profile"
 version = "0.1.3"
 description = "Subject-centric, time-aware people analytics on top of pyduck-ona (no LLM required)."
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "EzraAir555", email = "ezraair555@gmail.com"},
 ]
@@ -24,7 +24,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Human Resources Professionals",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
